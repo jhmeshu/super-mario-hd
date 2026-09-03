@@ -33,7 +33,7 @@ class BootScene extends Phaser.Scene {
 
     const font = { fontFamily: COLORS.hudFont, stroke: COLORS.hudStroke };
     this.add.text(GAME_W / 2, 200, "SUPER MARIO HD", { ...font, fontSize: "120px", color: "#ffffff", strokeThickness: 14 }).setOrigin(0.5).setShadow(0, 10, "rgba(0,0,0,.35)", 20).setDepth(DEPTH.hud);
-    this.add.text(GAME_W / 2, 320, "WORLD 1-1  -  BUILT WITH PHASER 3", { ...font, fontSize: "34px", color: "#ffe066", strokeThickness: 8 }).setOrigin(0.5).setDepth(DEPTH.hud);
+    this.add.text(GAME_W / 2, 320, "WORLD 1  -  BUILT WITH PHASER 3", { ...font, fontSize: "34px", color: "#ffe066", strokeThickness: 8 }).setOrigin(0.5).setDepth(DEPTH.hud);
 
     const controls = [
       "MOVE   ARROWS  or  A D",

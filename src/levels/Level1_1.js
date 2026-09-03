@@ -59,7 +59,11 @@ function buildLevel1_1() {
     name: "1-1",
     time: LEVEL_TIME,
     decor: { bushes: [8, 19, 52, 78, 105, 136] },
-    warpPipe: { col: 42 }
+    warpPipe: { col: 42, scene: "BonusScene", returnXCol: 72 },
+    warpPipes: [
+      { col: 50, scene: "UndergroundScene", returnXCol: 50, levelId: "1-1U" }
+    ],
+    next: "1-2"
   };
 }
 const LEVEL1_1 = buildLevel1_1();

@@ -38,3 +38,38 @@ function drawStalactites(ctx, w, h) {
   ctx.fillStyle = "rgba(70,224,124,0.8)"; ctx.fillRect(508, 158, 6, 94);
 }
 
+function drawSkybank(ctx, w, h) {
+  const puff = (cx, cy, s) => { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); fillEll(ctx, "#ffffff", 0, 14, 70, 22); [[0, 0, 38], [42, -8, 28], [-42, -4, 26], [16, -24, 26], [-18, -22, 24]].forEach((c) => fillEll(ctx, "#f4faff", c[0], c[1], c[2], c[2] * 0.95)); ctx.restore(); };
+  puff(120, 80, 1.1); puff(380, 50, 0.8); puff(640, 110, 1.0); puff(900, 70, 0.85);
+  ctx.fillStyle = "rgba(255,255,255,.7)";
+  [[200, 160], [520, 170], [820, 175]].forEach((p) => fillEll(ctx, "rgba(255,255,255,.7)", p[0], p[1], 30, 8));
+}
+
+function drawAirship(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,255,1)");
+  ctx.fillStyle = g; ctx.fillRect(0, h * 0.4, w, h * 0.6);
+  const puff = (cx, cy, s) => { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); fillEll(ctx, "#ffffff", 0, 14, 80, 24); [[0, 0, 42], [46, -8, 32], [-46, -4, 30], [18, -28, 30], [-20, -26, 28]].forEach((c) => fillEll(ctx, "#eef6ff", c[0], c[1], c[2], c[2] * 0.95)); ctx.restore(); };
+  puff(140, 200, 1.4); puff(440, 220, 1.2); puff(760, 210, 1.5); puff(1060, 230, 1.1);
+}
+
+function drawCastleFar(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#3a1414"); g.addColorStop(1, "#1c0606");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "rgba(180,40,30,.25)";
+  for (let x = 0; x < w; x += 32) ctx.fillRect(x, h - 80, 20, 80);
+  ctx.fillStyle = "rgba(255,180,40,.15)";
+  for (let x = 80; x < w; x += 64) ctx.fillRect(x, h - 120, 24, 120);
+}
+
+function drawCastleMid(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#5a1818"); g.addColorStop(1, "#2a0a0a");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  const block = (x, y) => { ctx.fillStyle = "#3a1010"; ctx.fillRect(x, y, 24, 24); ctx.strokeStyle = "#1a0606"; ctx.lineWidth = 2; ctx.strokeRect(x, y, 24, 24); };
+  for (let x = 0; x < w; x += 28) for (let y = 0; y < h; y += 28) block(x, y);
+  ctx.fillStyle = "rgba(255,140,40,.4)";
+  for (let x = 56; x < w; x += 120) { ctx.fillRect(x, h * 0.4, 16, 60); ctx.fillRect(x + 8, h * 0.4 - 8, 18, 12); }
+}
+

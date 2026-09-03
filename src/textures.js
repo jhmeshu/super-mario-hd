@@ -296,6 +296,53 @@ function drawFragment(ctx) {
   ctx.beginPath(); ctx.moveTo(0, 11); ctx.lineTo(28, 11); ctx.stroke();
   ctx.strokeStyle = "#5f2410"; ctx.strokeRect(1.5, 1.5, 25, 19);
 }
+function drawBrickUnderground(ctx) {
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, "#7a3a1a"); g.addColorStop(1, "#4a1f0a");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+  ctx.strokeStyle = "#2a1108"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 21.3); ctx.lineTo(64, 21.3);
+  ctx.moveTo(0, 42.6); ctx.lineTo(64, 42.6);
+  ctx.moveTo(32, 0); ctx.lineTo(32, 21.3);
+  ctx.moveTo(16, 21.3); ctx.lineTo(16, 42.6);
+  ctx.moveTo(48, 21.3); ctx.lineTo(48, 42.6);
+  ctx.moveTo(32, 42.6); ctx.lineTo(32, 64);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.beginPath(); ctx.moveTo(3, 3); ctx.lineTo(61, 3); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.06)";
+  ctx.fillRect(0, 0, 64, 5);
+}
+function drawPipeUnderground(ctx) {
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, "#3a8a44"); g.addColorStop(1, "#1d4a23");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 64);
+  ctx.fillStyle = "#5fb86a"; ctx.fillRect(8, 0, 18, 64);
+  ctx.fillStyle = "#1d4a23"; ctx.fillRect(96, 0, 24, 64);
+  ctx.strokeStyle = "#0d2a14"; ctx.lineWidth = 4;
+  ctx.strokeRect(2, -4, 124, 72);
+}
+function drawTorch(ctx) {
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, "#ffcf33"); g.addColorStop(1, "#e5342b");
+  fillEll(ctx, "#ffe066", 16, 12, 12, 14);
+  fillEll(ctx, "#ff8a1a", 16, 8, 8, 10);
+  fillEll(ctx, "#ffffff", 14, 6, 3, 4);
+  ctx.fillStyle = "#3a2614"; ctx.fillRect(12, 28, 8, 28);
+  ctx.strokeStyle = "#1a0e08"; ctx.lineWidth = 2;
+  ctx.strokeRect(12, 28, 8, 28);
+}
+function drawCoinPile(ctx) {
+  const coin = (cx, cy, r) => {
+    fillEll(ctx, "#f5b201", cx, cy, r, r * 0.9);
+    ctx.strokeStyle = "#a86e00"; ctx.lineWidth = 1.5;
+    ell(ctx, cx, cy, r, r * 0.9); ctx.stroke();
+    fillEll(ctx, "#ffd84d", cx, cy, r * 0.5, r * 0.45);
+  };
+  coin(16, 26, 10); coin(38, 28, 11); coin(54, 22, 9);
+  coin(28, 18, 8); coin(46, 14, 7);
+}
 function drawMushroom(ctx) {
   fillEll(ctx, "#e5342b", 24, 20, 21.5, 15.5);
   ctx.lineWidth = 3; ctx.strokeStyle = "#9c130b";
@@ -333,6 +380,10 @@ const TEX = {
     texCanvas(scene, "castle", 448, 384, drawCastle);
     texCanvas(scene, "bush", 256, 64, drawBush);
     texCanvas(scene, "shadow", 96, 26, drawShadow);
+    texCanvas(scene, "brick-underground", TILE, TILE, drawBrickUnderground);
+    texCanvas(scene, "pipe-underground", 128, TILE, drawPipeUnderground);
+    texCanvas(scene, "torch-flame", 32, 64, drawTorch);
+    texCanvas(scene, "coin-pile", 64, 32, drawCoinPile);
     texCanvas(scene, "cloud-tile", 960, 400, drawCloudTile);
     texCanvas(scene, "hill-tile", 960, 420, drawHillTile);
   }

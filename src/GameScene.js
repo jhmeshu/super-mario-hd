@@ -7,10 +7,13 @@ class GameScene extends Phaser.Scene {
   constructor() { super("GameScene"); }
   init(data) {
     if (!(data && data.fromBonus)) this.registry.set("timeLeft", null);
+    this._initData = data || {};
   }
 
   create() {
-    const L = LEVEL1_1;
+    const data = this.scene.settings.data || this._initData || {};
+    console.log("[GameScene] create, levelId:", data.levelId);
+    const L = levelById(data.levelId || "1-1");
     const reg = this.registry;
     const groundTop = L.groundRow * TILE;
     this.levelDone = false;
@@ -22,17 +25,20 @@ class GameScene extends Phaser.Scene {
 
     /* sky + parallax layers */
     const sky = this.add.graphics().setScrollFactor(0).setDepth(DEPTH.sky);
-    this.theme = THEMES.overworld;
+    const themeKey = L.theme || "overworld";
+    this.theme = THEMES[themeKey] || THEMES.overworld;
     sky.fillGradientStyle(this.theme.sky[0], this.theme.sky[0], this.theme.sky[1], this.theme.sky[1]);
     sky.fillRect(0, 0, GAME_W, GAME_H);
-    this.bgDefs = this.theme.layers;
+    this.bgDefs = this.theme.layers || [];
     this.bgLayers = this.bgDefs.map((def) => {
       const th = this.textures.get(def.key).getSourceImage().height;
       const ts = this.add.tileSprite(0, def.y, GAME_W, th, def.key).setOrigin(0, 0).setScrollFactor(0).setDepth(def.depth);
       if (def.tint) ts.setTint(def.tint);
       return ts;
     });
-    L.decor.bushes.forEach((c) => this.add.image(c * TILE + 128, groundTop, "bush").setOrigin(0.5, 1).setDepth(DEPTH.decor));
+    if (L.decor && L.decor.bushes) {
+      L.decor.bushes.forEach((c) => this.add.image(c * TILE + 128, groundTop, "bush").setOrigin(0.5, 1).setDepth(DEPTH.decor));
+    }
 
     /* groups */
     this.solids = this.physics.add.staticGroup();
@@ -43,9 +49,12 @@ class GameScene extends Phaser.Scene {
 
     /* player is built before tiles so the flag zone can bind its overlap */
     const fromBonus = this.scene.settings.data && this.scene.settings.data.fromBonus;
-    const spawnCol = fromBonus ? BONUS_RETURN_X_COL : 2;
+    const fromUG = this.scene.settings.data && this.scene.settings.data.fromUnderground;
+    const retCol = this.scene.settings.data && this.scene.settings.data.returnXCol;
+    const spawnCol = fromUG && retCol !== undefined ? retCol : (fromBonus ? BONUS_RETURN_X_COL : 2);
     this.player = new Player(this, spawnCol * TILE + 16, groundTop);
     if (fromBonus) this.player.invulnUntil = this.time.now + 1000;
+    this._currentLevel = L;
 
     /* build every cell of the map */
     for (let r = 0; r < L.rows.length; r++) {
@@ -66,7 +75,15 @@ class GameScene extends Phaser.Scene {
         } else if (ch === "G") {
           this.enemies.add(new Goomba(this, cx, (r + 1) * TILE));
         } else if (ch === "P") {
-          this.buildPipe(c, r, L.warpPipe && L.warpPipe.col === c ? L.warpPipe : null);
+          const warpTargets = [];
+          if (L.warpPipe && L.warpPipe.col === c) warpTargets.push(L.warpPipe);
+          if (L.warpPipes) L.warpPipes.forEach((wp) => { if (wp.col === c) warpTargets.push(wp); });
+          this.buildPipe(c, r, warpTargets[0]);
+        } else if (ch === "U") {
+          const upMap = (L.upPipes || []).find((u) => u.col === c);
+          this.buildUpPipe(c, r, upMap ? upMap.destCol : c);
+        } else if (ch === "D") {
+          this.buildDownPipe(c, r);
         } else if (ch === "F") {
           this.buildFlag(c, r);
         } else if (ch === "C") {
@@ -106,6 +123,7 @@ class GameScene extends Phaser.Scene {
     /* global keys */
     this.input.keyboard.addCapture("SPACE,UP,DOWN,LEFT,RIGHT,SHIFT,R,M,W,A,D,Z,X");
     this.downKey = this.input.keyboard.addKey("DOWN");
+    this.upKey = this.input.keyboard.addKey("UP");
     this.input.keyboard.on("keydown-R", () => { if (!this.levelDone) this.scene.restart(); });
     this.input.keyboard.on("keydown-M", () => {
       SFX.muted = !SFX.muted;
@@ -118,11 +136,29 @@ class GameScene extends Phaser.Scene {
 
   buildPipe(c, topRow, warp) {
     const px = c * TILE;
+    const L = this._currentLevel;
     this.solids.create(px + 64, topRow * TILE + 32, "pipe-top");
-    if (warp) this.warpCap = { x: px + 64, y: topRow * TILE };
-    for (let r = topRow + 1; r < LEVEL1_1.groundRow; r++) {
+    if (warp) {
+      if (!this.warpCaps) this.warpCaps = [];
+      this.warpCaps.push({ x: px + 64, y: topRow * TILE, scene: warp.scene || "BonusScene", returnXCol: warp.returnXCol, levelId: warp.levelId });
+    }
+    for (let r = topRow + 1; r < L.groundRow; r++) {
       this.solids.create(px + 64, r * TILE + 32, "pipe-body");
     }
+  }
+
+  buildUpPipe(c, topRow, destCol) {
+    const px = c * TILE;
+    this.solids.create(px + 64, topRow * TILE + 32, "pipe-top");
+    for (let r = topRow + 1; r < this._currentLevel.groundRow; r++) {
+      this.solids.create(px + 64, r * TILE + 32, "pipe-body");
+    }
+    if (!this.upCaps) this.upCaps = [];
+    this.upCaps.push({ x: px + 64, y: topRow * TILE, destCol });
+  }
+
+  buildDownPipe(c, topRow) {
+    this.buildPipe(c, topRow, null);
   }
 
   buildFlag(c, r) {
@@ -150,7 +186,7 @@ class GameScene extends Phaser.Scene {
     p.body.setVelocityX(0);
     p.setX(this.flagZone.x - 36);
     this.tweens.add({ targets: this.flagImg, y: this.flagBottomY, duration: 800, ease: "Sine.easeIn" });
-    const gt = LEVEL1_1.groundRow * TILE;
+    const gt = this._currentLevel.groundRow * TILE;
     this.tweens.add({
       targets: p, y: gt, duration: 650, ease: "Sine.easeIn",
       onComplete: () => { p.forceRight = true; p.body.setVelocityX(170); }
@@ -159,9 +195,16 @@ class GameScene extends Phaser.Scene {
     this.time.delayedCall(1400, () => {
       this.add.text(GAME_W / 2, 300, "COURSE CLEAR!", { fontFamily: COLORS.hudFont, fontSize: "96px", color: "#ffffff", stroke: "#16324f", strokeThickness: 14 }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH.hud);
     });
-    this.time.delayedCall(5200, () => {
-      this.registry.set("clear", true);
-      this.scene.start("BootScene");
+    const nextLevel = this._currentLevel.next;
+    const self = this;
+    this.time.delayedCall(5200, function () {
+      if (nextLevel) {
+        self.registry.set("timeLeft", null);
+        self.scene.start("GameScene", { levelId: nextLevel });
+      } else {
+        self.registry.set("clear", true);
+        self.scene.start("BootScene");
+      }
     });
   }
 
@@ -270,6 +313,8 @@ class GameScene extends Phaser.Scene {
   }
 
   buildHUD() {
+    const L = this._currentLevel;
+    const worldLabel = (L && L.worldLabel) || "1-1";
     const label = (x, str) => this.add.text(x, 26, str, { fontFamily: COLORS.hudFont, fontSize: "30px", color: COLORS.hudColor, stroke: COLORS.hudStroke, strokeThickness: 8 }).setScrollFactor(0).setDepth(DEPTH.hud);
     const value = (x, str) => this.add.text(x, 68, str, { fontFamily: COLORS.hudFont, fontSize: "34px", color: COLORS.hudColor, stroke: COLORS.hudStroke, strokeThickness: 8 }).setScrollFactor(0).setDepth(DEPTH.hud);
     label(48, "MARIO");
@@ -277,7 +322,7 @@ class GameScene extends Phaser.Scene {
     this.add.image(545, 86, "coin-0").setScale(0.8).setScrollFactor(0).setDepth(DEPTH.hud);
     this.hudCoins = value(572, "x" + pad(this.registry.get("coins"), 2));
     label(880, "WORLD");
-    value(880, "1-1");
+    value(880, worldLabel);
     label(1180, "TIME");
     this.hudTime = value(1180, "348");
     label(1480, "LIVES");
@@ -318,11 +363,30 @@ class GameScene extends Phaser.Scene {
     this.enemies.getChildren().forEach((e) => { if (e.y > GAME_H + 200) e.destroy(); });
     this.powerups.getChildren().forEach((u) => { if (u.y > GAME_H + 200) u.destroy(); });
 
-    /* warp pipe: stand on pipe #2 cap and press Down */
-    if (!this.levelDone && !p.dead && this.warpCap && p.body.blocked.down &&
-        Phaser.Input.Keyboard.JustDown(this.downKey) &&
-        Math.abs(p.x - this.warpCap.x) < 44 && Math.abs(p.body.bottom - this.warpCap.y) < 6) {
-      this.enterBonus();
+    /* warp pipe: stand on any warp cap and press Down */
+    if (!this.levelDone && !p.dead && this.warpCaps && p.body.blocked.down &&
+        Phaser.Input.Keyboard.JustDown(this.downKey)) {
+      for (const cap of this.warpCaps) {
+        if (Math.abs(p.x - cap.x) < 44 && Math.abs(p.body.bottom - cap.y) < 6) {
+          this._enterWarp(cap);
+          break;
+        }
+      }
+    }
+
+    /* up-pipe: stand on up-cap and press Up; fast-travel horizontally */
+    if (!this.levelDone && !p.dead && this.upCaps && p.body.blocked.down &&
+        Phaser.Input.Keyboard.JustDown(this.upKey)) {
+      for (const cap of this.upCaps) {
+        if (Math.abs(p.x - cap.x) < 44 && Math.abs(p.body.bottom - cap.y) < 6) {
+          SFX.play("pause");
+          const destX = cap.destCol * TILE + 16;
+          p.setX(destX);
+          p.body.setVelocityY(0);
+          this.cameras.main.flash(200, 200, 230, 255);
+          break;
+        }
+      }
     }
 
     /* course clear: stop at the castle door and step inside */
@@ -333,12 +397,18 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  enterBonus() {
+  _enterWarp(cap) {
     if (this.levelDone || this.player.dead) return;
     SFX.play("pause");
     this.registry.set("timeLeft", this.timeLeft);
     this.cameras.main.fadeOut(280, 0, 0, 0);
-    this.time.delayedCall(300, () => this.scene.start("BonusScene"));
+    this.time.delayedCall(300, () => {
+      this.scene.start(cap.scene, {
+        returnLevel: "1-1",
+        returnXCol: cap.returnXCol,
+        levelId: cap.levelId
+      });
+    });
   }
 
   handlePlayerDeath() {

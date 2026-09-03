@@ -81,6 +81,10 @@ TEX.genAll = function (scene) {
     texCanvas(scene, "cavern-far-tile", 1200, 360, (ctx) => drawCavernFar(ctx, 1200, 360));
     texCanvas(scene, "cavern-mid-tile", 1200, 260, (ctx) => drawStalactites(ctx, 1200, 260));
     texCanvas(scene, "lava-tile", 256, 64, (ctx) => drawLava(ctx, 256, 64));
+    texCanvas(scene, "skybank-tile", 1200, 240, (ctx) => drawSkybank(ctx, 1200, 240));
+    texCanvas(scene, "airship-tile", 1200, 360, (ctx) => drawAirship(ctx, 1200, 360));
+    texCanvas(scene, "castle-far-tile", 1200, 360, (ctx) => drawCastleFar(ctx, 1200, 360));
+    texCanvas(scene, "castle-mid-tile", 1200, 260, (ctx) => drawCastleMid(ctx, 1200, 260));
 };
 
 /* tiny flapping bird silhouette, two wing frames, faces left */

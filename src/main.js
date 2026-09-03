@@ -12,6 +12,6 @@ window.addEventListener("load", () => {
     physics: { default: "arcade", arcade: { gravity: { y: PHYS.gravity }, debug: false } },
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     audio: { noAudio: true },
-    scene: [BootScene, GameScene]
+    scene: [BootScene, GameScene, UndergroundScene]
   });
 });
